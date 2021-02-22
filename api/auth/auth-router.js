@@ -63,7 +63,17 @@ router.post("/login",checkPayload,checkUserExists, (req,res)=>{
 })
 
 router.get("/logout",(req,res)=>{
-    console.log("See ya!")
+    if(req.session){
+        req.session.destroy(err =>{
+            if(err){
+                res.json("Can't log out")
+            }else{
+                res.json("Logged out")
+            }
+        })
+    }else{
+        res.json("No session")
+    }
 })
 
 module.exports = router
