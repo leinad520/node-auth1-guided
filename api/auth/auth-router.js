@@ -24,6 +24,20 @@ const checkUserInDb = async (req,res,next)=>{
     }
 }
 
+const checkUserExists = async (req,res,next)=>{
+    try{
+        const rows = await User.findBy({username: req.body.username})
+        if(rows.length){
+            req.userData = rows[0]
+            next()
+        }else{
+            res.status(401).json("Login error, check credentials")
+        }
+    }catch(e){
+        res.status(500).json(`Server error: ${e}`)
+    }
+}
+
 router.post("/register", checkPayload, checkUserInDb, async (req,res)=>{
     try{
         const hash = bcrypt.hashSync(req.body.password, 10) //2^10 
@@ -34,8 +48,17 @@ router.post("/register", checkPayload, checkUserInDb, async (req,res)=>{
     }
 })
 
-router.post("/login", (req,res)=>{
-    console.log("Logging in!")
+router.post("/login",checkPayload,checkUserExists, (req,res)=>{
+    try{
+        const verified = bcrypt.compareSync(req.body.password, req.userData.password)
+        if(verified){
+            console.log("We need to create session here")
+        }else{
+            res.status(401).json("Username or password are incorrect")
+        }
+    }catch(e){
+        res.status(500).json({message: e.message})
+    }
 })
 
 router.get("/logout",(req,res)=>{
